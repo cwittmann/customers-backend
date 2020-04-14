@@ -6,7 +6,7 @@ const app = express()
 app.use(bodyParser.json())
 
 var corsOptions = {
-    origin: 'http://www.customers.com',
+    origin: 'http://localhost:4200',
     optionsSuccessStatus: 204
   }
 app.use(cors(corsOptions))
@@ -14,10 +14,7 @@ app.use(cors(corsOptions))
 app.listen(8000, ()=> { console.log("Server started!")});
 
 app.route('/api/customers').get((req, res) => {
-    res.send(
-        {
-            customers: [{name: "Joe"}, {name: "Mike"}, {name: "George"}]
-        }
+    res.send([{name: "Joe"}, {name: "Mike"}, {name: "George"}]        
     );
 });
 
