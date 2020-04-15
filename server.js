@@ -1,6 +1,7 @@
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const express = require('express')
+const mysql = require('mysql'); 
 
 const app = express()
 app.use(bodyParser.json())
@@ -11,31 +12,45 @@ var corsOptions = {
   }
 app.use(cors(corsOptions))
 
+const connection = mysql.createConnection({
+    host: "localhost",
+    port: "3306",
+    database: "customers",
+    user: "admin",
+    password: "cW53a8x6"
+});
+
+connection.connect(function(error) {
+    if (error) throw error;
+
+    console.log("Connected to MySQL database!");
+  });
+
 app.listen(8000, ()=> { console.log("Server started!")});
 
 app.route('/api/customers').get((req, res) => {
-    res.send([{id: 1, name: "Joe"}, {id: 2, name: "Mike"}, {id:3, name: "George"}]        
-    );
+    
+    sql = "SELECT * FROM customer;";
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);        
+        res.send(resultJSON);
+    });
 });
 
 app.route('/api/customers/:id').get((req,res) => {   
     
     const id = req.params['id'];
-    var customerName;
+    sql = 'SELECT * FROM customer WHERE id = "' + id + '" LIMIT 1;';    
 
-    if(id == 1){
-        customerName = "Joe";
-    }
-    if(id == 2){
-        customerName = "Mike";
-    }
-    if(id == 3){
-        customerName = "George";
-    }
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
 
-    res.send(
-        { id: id, name: customerName }
-    );
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    });
 })
 
 app.route('/api/customers').post((req, res) => {
