@@ -60,9 +60,6 @@ app.route('/api/customers').post((req, res) => {
 app.route('/api/customers/:customer').put((req, res) => {
 
     let customer = req.body;
-
-    // Wrong date from request!
-    console.log(customer.birthDate.toString());
     let birthDateDate = new Date(customer.birthDate);    
     let birthDateString = birthDateDate.toISOString().slice(0, 10).replace('T', ' ');        
 
