@@ -58,7 +58,22 @@ app.route('/api/customers').post((req, res) => {
 });
 
 app.route('/api/customers/:customer').put((req, res) => {
-    res.send(200, req.body);
+
+    let customer = req.body;
+
+    // Wrong date from request!
+    console.log(customer.birthDate.toString());
+    let birthDateDate = new Date(customer.birthDate);    
+    let birthDateString = birthDateDate.toISOString().slice(0, 10).replace('T', ' ');        
+
+    sql = 'UPDATE customer SET firstName="' + customer.firstName + '", lastName="' + customer.lastName + '", birthDate="' + birthDateString + '", street="' + customer.street + '", postalCode="' + customer.postalCode + '", city="' + customer.city + '", country="' + customer.country + '", phone="' + customer.phone + '", eMail="' + customer.eMail + '" WHERE id="' + customer.id +'";'
+  
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    });    
 });
 
 app.route('/api/customers/:customer').delete((req, res) => {
