@@ -63,7 +63,7 @@ app.route('/api/customers/:customer').put((req, res) => {
     let birthDateDate = new Date(customer.birthDate);    
     let birthDateString = birthDateDate.toISOString().slice(0, 10).replace('T', ' ');        
 
-    sql = 'UPDATE customer SET firstName="' + customer.firstName + '", lastName="' + customer.lastName + '", birthDate="' + birthDateString + '", street="' + customer.street + '", postalCode="' + customer.postalCode + '", city="' + customer.city + '", country="' + customer.country + '", phone="' + customer.phone + '", eMail="' + customer.eMail + '" WHERE id="' + customer.id +'";'
+    sql = 'UPDATE customer SET firstName="' + customer.firstName + '", lastName="' + customer.lastName + '", title="' + customer.title + '", gender="' + customer.gender + '", job="' + customer.job + '", birthDate="' + birthDateString + '", streetAddress="' + customer.streetAddress + '", postalCode="' + customer.postalCode + '", city="' + customer.city + '", country="' + customer.country + '", currency="' + customer.currency + '", phone="' + customer.phone + '", eMail="' + customer.eMail + '" WHERE id="' + customer.id +'";'
   
     connection.query(sql, function(error,result) {
         if (error) throw error;
