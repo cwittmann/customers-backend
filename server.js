@@ -54,7 +54,18 @@ app.route('/api/customers/:id').get((req,res) => {
 })
 
 app.route('/api/customers').post((req, res) => {
-    res.send(201, req.body);
+    let customer = req.body;
+    let birthDateDate = new Date(customer.birthDate);    
+    let birthDateString = birthDateDate.toISOString().slice(0, 10).replace('T', ' ');        
+
+    sql = 'INSERT INTO customer VALUES("' + customer.id + '", "' + customer.firstName + '", "' + customer.lastName + '", "' + customer.title + '", "' + customer.gender + '", "' + customer.job + '", "' + birthDateString + '", "' + customer.streetAddress + '", "' + customer.postalCode + '", "' + customer.city + '", "' + customer.country + '", "' + customer.currency + '", "' + customer.phone + '", "' + customer.eMail + '");'
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    }); 
 });
 
 app.route('/api/customers/:customer').put((req, res) => {
