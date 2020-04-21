@@ -2,6 +2,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const express = require('express')
 const mysql = require('mysql'); 
+const uuidv4 = require('uuid/v4');
 
 const app = express()
 app.use(bodyParser.json())
@@ -27,6 +28,8 @@ connection.connect(function(error) {
   });
 
 app.listen(8000, ()=> { console.log("Server started!")});
+
+// CUSTOMERS
 
 app.route('/api/customers').get((req, res) => {
     
@@ -86,4 +89,103 @@ app.route('/api/customers/:customer').put((req, res) => {
 
 app.route('/api/customers/:customer').delete((req, res) => {
     res.sendStatus(204);
+});
+
+// PRODUCTS
+
+app.route('/api/products').get((req, res) => {
+    
+    sql = "SELECT * FROM product;";
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);        
+        res.send(resultJSON);
+    });
+});
+
+// ORDERS
+
+app.route('/api/orders').get((req, res) => {
+    
+    sql = "SELECT * FROM orders;";
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);        
+        res.send(resultJSON);
+    });
+});
+
+app.route('/api/orders').post((req, res) => {
+    let order = req.body;
+    let currentDate = new Date();    
+    let currentDateString = currentDate.toISOString().slice(0, 10).replace('T', ' ');        
+
+    sql = 'INSERT INTO orders VALUES("' + order.id + '", "' + order.customerId + '", "' + order.productId + '", "' + currentDateString + '", "' + order.status + '", "' + currentDateString + '", "' + order.amount + '");'
+    console.log(sql);
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    }); 
+});
+
+app.route('/api/generateOrders').get((req, res) => {
+    sqlCustomer = "SELECT * FROM customer;";
+    sqlProduct = "SELECT * FROM product;";
+
+    orders = [];
+
+    connection.query(sqlCustomer, function(error,customerResult) {
+        if (error) throw error;
+
+        customersJSON = JSON.stringify(customerResult);        
+        customers = JSON.parse(customersJSON);
+
+        connection.query(sqlProduct, function(error,productResult) {
+            if (error) throw error;
+    
+            productsJSON = JSON.stringify(productResult);        
+            products = JSON.parse(productsJSON);
+            
+            for (var i = 0; i < customers.length; i++){
+                console.log(i);
+                const numberOfProducts = Math.floor(Math.random() * Math.floor(5));      
+      
+                var customer = customers[i];
+
+                for(var j = 0; j < numberOfProducts; j++){                   
+                  const id = uuidv4();
+                  const status = Math.floor(Math.random() * Math.floor(4));
+                  const amount = Math.floor(Math.random() * Math.floor(20));
+      
+                  let currentDate = new Date();    
+                  let currentDateString = currentDate.toISOString().slice(0, 10).replace('T', ' ');
+
+                  const productIndex = Math.floor(Math.random() * Math.floor(1000));
+                  const product = products[productIndex];
+                  const order = {id: id, customerId: customer.id, productId: product.id, date: currentDateString, status: status, amount: amount, timestamp: currentDateString};        
+                  orders.push(order);
+                }
+            }
+
+            for (var i = 0; i < orders.length; i++){
+                var order = orders[i];
+
+                sql = 'INSERT INTO orders VALUES("' + order.id + '", "' + order.customerId + '", "' + order.productId + '", "' + order.date + '", "' + order.status + '", "' + order.amount + '", "' + order.timestamp + '");'
+                console.log(sql);
+
+                connection.query(sql, function(error,result) {
+                    if (error) throw error;           
+                    
+                }); 
+                
+            }
+        });
+    });    
 });
