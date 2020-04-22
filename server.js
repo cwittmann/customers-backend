@@ -87,8 +87,19 @@ app.route('/api/customers/:customer').put((req, res) => {
     });    
 });
 
-app.route('/api/customers/:customer').delete((req, res) => {
-    res.sendStatus(204);
+app.route('/api/customers/:id').delete((req, res) => {
+    const id = req.params['id'];
+    
+    sql = 'DELETE FROM customer WHERE id="' + id + '";';
+    
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+        
+        res.sendStatus(204);
+    }); 
+
+
+    
 });
 
 // PRODUCTS
