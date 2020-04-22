@@ -119,6 +119,19 @@ app.route('/api/orders').get((req, res) => {
     });
 });
 
+app.route('/api/orders/:customerId').get((req,res) => {   
+    
+    const customerId = req.params['customerId'];
+    sql = 'SELECT * FROM orders WHERE customerId = "' + customerId + '";';    
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    });
+})
+
 app.route('/api/orders').post((req, res) => {
     let order = req.body;
     let currentDate = new Date();    
@@ -135,7 +148,20 @@ app.route('/api/orders').post((req, res) => {
     }); 
 });
 
-app.route('/api/generateOrders').get((req, res) => {
+app.route('/api/product/:id').get((req,res) => {   
+    
+    const id = req.params['id'];
+    sql = 'SELECT * FROM product WHERE id = "' + id + '" LIMIT 1;';    
+
+    connection.query(sql, function(error,result) {
+        if (error) throw error;
+
+        resultJSON = JSON.stringify(result);                
+        res.send(resultJSON);
+    });
+})
+
+/* app.route('/api/generateOrders').get((req, res) => {
     sqlCustomer = "SELECT * FROM customer;";
     sqlProduct = "SELECT * FROM product;";
 
@@ -188,4 +214,4 @@ app.route('/api/generateOrders').get((req, res) => {
             }
         });
     });    
-});
+}); */
