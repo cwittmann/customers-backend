@@ -192,7 +192,19 @@ app.route("/api/orders").get((req, res) => {
   });
 });
 
-app.route("/api/orders/:customerId").get((req, res) => {
+app.route("/api/orders/:id").get((req, res) => {
+  const id = req.params["id"];
+  sql = 'SELECT * FROM orders WHERE id = "' + id + '" LIMIT 1;';
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+});
+
+app.route("/api/ordersOfCustomer/:customerId").get((req, res) => {
   const customerId = req.params["customerId"];
   sql = 'SELECT * FROM orders WHERE customerId = "' + customerId + '";';
 
