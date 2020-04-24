@@ -236,10 +236,47 @@ app.route("/api/orders").post((req, res) => {
     '", "' +
     order.status +
     '", "' +
-    currentDateString +
-    '", "' +
     order.amount +
+    '", "' +
+    currentDateString +
     '");';
+  console.log(sql);
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+});
+
+app.route("/api/orders/:order").put((req, res) => {
+  let order = req.body;
+  let orderDate = new Date(order.date);
+  let orderDateString = orderDate.toISOString().slice(0, 10).replace("T", " ");
+  let currentDate = new Date();
+  let currentDateString = currentDate
+    .toISOString()
+    .slice(0, 10)
+    .replace("T", " ");
+
+  sql =
+    'UPDATE orders SET customerId="' +
+    order.customerId +
+    '", productId="' +
+    order.productId +
+    '", date="' +
+    orderDateString +
+    '", status="' +
+    order.status +
+    '", amount="' +
+    order.amount +
+    '", timestamp="' +
+    currentDateString +
+    '" WHERE id="' +
+    order.id +
+    '";';
+
   console.log(sql);
 
   connection.query(sql, function (error, result) {
