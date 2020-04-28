@@ -1,11 +1,47 @@
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const express = require("express");
+const session = require("express-session");
+const app = new express();
+const passport = require("passport");
+const bodyParser = require("body-parser");
+const LocalStrategy = require("passport-local").Strategy;
 const mysql = require("mysql");
-const uuidv4 = require("uuid/v4");
 
-const app = express();
+passport.use(
+  new LocalStrategy(function (username, password, done) {
+    if (username === "123" && password === "123") {
+      return done(null, username);
+    } else {
+      return done("unauthorized access", false);
+    }
+  })
+);
+
+passport.serializeUser(function (user, done) {
+  if (user) done(null, user);
+});
+
+passport.deserializeUser(function (id, done) {
+  done(null, id);
+});
+
+app.use(session({ secret: "anything", resave: true, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(bodyParser.json());
+app.use(bodyParser.json());
+
+const auth = () => {
+  return (req, res, next) => {
+    passport.authenticate("local", (error, user, info) => {
+      if (error) res.status(400).json({ statusCode: 200, message: error });
+      req.login(user, function (error) {
+        if (error) return next(error);
+        next();
+      });
+    })(req, res, next);
+  };
+};
 
 var corsOptions = {
   origin: "http://localhost:4200",
@@ -31,9 +67,27 @@ app.listen(8000, () => {
   console.log("Server started!");
 });
 
+// AUTHENTICATE
+app.post("/api/authenticate", auth(), (req, res) => {
+  res.status(200).json({ statusCode: 200, user: req.user });
+});
+
+const isLoggedIn = (req, res, next) => {
+  console.log("session ", req.session);
+  /* if (req.isAuthenticated()) {
+    return next();
+  } */
+
+  return next();
+
+  return res
+    .status(400)
+    .json({ statusCode: 400, message: "not authenticated" });
+};
+
 // CUSTOMERS
 
-app.route("/api/customers").get((req, res) => {
+app.get("/api/customers", isLoggedIn, (req, res) => {
   sql = "SELECT * FROM customer;";
 
   connection.query(sql, function (error, result) {
@@ -43,6 +97,17 @@ app.route("/api/customers").get((req, res) => {
     res.send(resultJSON);
   });
 });
+
+/* app.route("/api/customers").get((req, res) => {
+  sql = "SELECT * FROM customer;";
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+}); */
 
 app.route("/api/customers/:id").get((req, res) => {
   const id = req.params["id"];
