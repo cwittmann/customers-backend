@@ -166,19 +166,6 @@ app.route("/api/customers/:id").delete((req, res) => {
   });
 });
 
-// PRODUCTS
-
-app.route("/api/products").get((req, res) => {
-  sql = "SELECT * FROM product;";
-
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
-});
-
 // ORDERS
 
 app.route("/api/orders").get((req, res) => {
@@ -277,7 +264,30 @@ app.route("/api/orders/:order").put((req, res) => {
     order.id +
     '";';
 
-  console.log(sql);
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+});
+
+app.route("/api/orders/:id").delete((req, res) => {
+  const id = req.params["id"];
+
+  sql = 'DELETE FROM orders WHERE id="' + id + '";';
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    res.sendStatus(204);
+  });
+});
+
+// PRODUCTS
+
+app.route("/api/products").get((req, res) => {
+  sql = "SELECT * FROM product;";
 
   connection.query(sql, function (error, result) {
     if (error) throw error;
@@ -287,7 +297,7 @@ app.route("/api/orders/:order").put((req, res) => {
   });
 });
 
-app.route("/api/product/:id").get((req, res) => {
+app.route("/api/products/:id").get((req, res) => {
   const id = req.params["id"];
   sql = 'SELECT * FROM product WHERE id = "' + id + '" LIMIT 1;';
 
