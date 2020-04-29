@@ -98,17 +98,6 @@ app.get("/api/customers", isLoggedIn, (req, res) => {
   });
 });
 
-/* app.route("/api/customers").get((req, res) => {
-  sql = "SELECT * FROM customer;";
-
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
-}); */
-
 app.route("/api/customers/:id").get((req, res) => {
   const id = req.params["id"];
   sql = 'SELECT * FROM customer WHERE id = "' + id + '" LIMIT 1;';
