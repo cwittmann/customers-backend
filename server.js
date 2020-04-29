@@ -63,15 +63,6 @@ connection.connect(function (error) {
   console.log("Connected to MySQL database!");
 });
 
-app.listen(8000, () => {
-  console.log("Server started!");
-});
-
-// AUTHENTICATE
-app.post("/api/authenticate", auth(), (req, res) => {
-  res.status(200).json({ statusCode: 200, user: req.user });
-});
-
 const isLoggedIn = (req, res, next) => {
   console.log("session ", req.session);
   /* if (req.isAuthenticated()) {
@@ -84,6 +75,20 @@ const isLoggedIn = (req, res, next) => {
     .status(400)
     .json({ statusCode: 400, message: "not authenticated" });
 };
+
+app.listen(8000, () => {
+  console.log("Server started!");
+});
+
+// AUTHENTICATE
+app.post("/api/authenticate", auth(), (req, res) => {
+  res.status(200).json({ statusCode: 200, user: req.user });
+});
+
+// CHECK CONNECTION
+app.get("/api/connect", (req, res) => {
+  res.status(200).json({ statusCode: 200 });
+});
 
 // CUSTOMERS
 
