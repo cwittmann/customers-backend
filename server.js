@@ -28,7 +28,7 @@ passport.use(
       result = passwordHash.verify(password, user.password);
 
       if (result) {
-        return done(null, username);
+        return done(null, user.id);
       } else {
         return done("unauthorized access", false);
       }
@@ -377,6 +377,20 @@ app.route("/api/products").get((req, res) => {
 app.route("/api/products/:id").get((req, res) => {
   const id = req.params["id"];
   sql = 'SELECT * FROM product WHERE id = "' + id + '" LIMIT 1;';
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+});
+
+// USERS
+
+app.route("/api/users/:id").get((req, res) => {
+  const id = req.params["id"];
+  sql = 'SELECT * FROM users WHERE id = "' + id + '" LIMIT 1;';
 
   connection.query(sql, function (error, result) {
     if (error) throw error;
