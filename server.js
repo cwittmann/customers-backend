@@ -103,6 +103,34 @@ app.post("/api/authenticate", auth(), (req, res) => {
   res.status(200).json({ statusCode: 200, user: req.user });
 });
 
+// REGISTER
+app.post("/api/register", (req, res) => {
+  let user = req.body;
+  hashPassword = passwordHash.generate(user.password);
+
+  sql =
+    'INSERT INTO users VALUES("' +
+    user.id +
+    '", "' +
+    user.firstName +
+    '", "' +
+    user.lastName +
+    '", "' +
+    user.userName +
+    '", "' +
+    hashPassword +
+    '", "' +
+    user.eMail +
+    '");';
+
+  connection.query(sql, function (error, result) {
+    if (error) throw error;
+
+    resultJSON = JSON.stringify(result);
+    res.send(resultJSON);
+  });
+});
+
 // CHECK CONNECTION
 app.get("/api/connect", (req, res) => {
   res.status(200).json({ statusCode: 200 });
