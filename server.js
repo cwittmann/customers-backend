@@ -5,15 +5,34 @@ const app = new express();
 const passport = require("passport");
 const bodyParser = require("body-parser");
 const LocalStrategy = require("passport-local").Strategy;
+const passwordHash = require("password-hash");
 const mysql = require("mysql");
 
 passport.use(
   new LocalStrategy(function (username, password, done) {
-    if (username === "123" && password === "123") {
-      return done(null, username);
-    } else {
-      return done("unauthorized access", false);
-    }
+    sql = 'SELECT * FROM users WHERE userName = "' + username + '";';
+
+    connection.query(sql, function (error, usersResult) {
+      if (error) {
+        console.log(error);
+      }
+
+      usersJSON = JSON.stringify(usersResult);
+      users = JSON.parse(usersJSON);
+
+      if (users.length === 0) {
+        return done("unauthorized access", false);
+      }
+
+      user = users[0];
+      result = passwordHash.verify(password, user.password);
+
+      if (result) {
+        return done(null, username);
+      } else {
+        return done("unauthorized access", false);
+      }
+    });
   })
 );
 
@@ -64,7 +83,6 @@ connection.connect(function (error) {
 });
 
 const isLoggedIn = (req, res, next) => {
-  console.log("session ", req.session);
   /* if (req.isAuthenticated()) {
     return next();
   } */
