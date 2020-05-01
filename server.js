@@ -6,33 +6,44 @@ const passport = require("passport");
 const bodyParser = require("body-parser");
 const LocalStrategy = require("passport-local").Strategy;
 const passwordHash = require("password-hash");
-const mysql = require("mysql");
+const Pool = require("pg").Pool;
+
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "customers",
+  password: "cW2600bx",
+  port: 3000,
+});
+
+pool.on("error", function (error) {
+  console.log(error.message, error.stack);
+});
 
 passport.use(
   new LocalStrategy(function (username, password, done) {
-    sql = 'SELECT * FROM users WHERE userName = "' + username + '";';
+    pool.query(
+      "SELECT * FROM users WHERE username=$1",
+      [username],
+      (error, usersResult) => {
+        if (error) {
+          console.log(error);
+        }
 
-    connection.query(sql, function (error, usersResult) {
-      if (error) {
-        console.log(error);
+        if (usersResult.rows.length === 0) {
+          return done("unauthorized access", false);
+        }
+
+        user = usersResult.rows[0];
+        result = passwordHash.verify(password, user.password);
+
+        if (result) {
+          return done(null, user.id);
+        } else {
+          return done("unauthorized access", false);
+        }
       }
-
-      usersJSON = JSON.stringify(usersResult);
-      users = JSON.parse(usersJSON);
-
-      if (users.length === 0) {
-        return done("unauthorized access", false);
-      }
-
-      user = users[0];
-      result = passwordHash.verify(password, user.password);
-
-      if (result) {
-        return done(null, user.id);
-      } else {
-        return done("unauthorized access", false);
-      }
-    });
+    );
   })
 );
 
@@ -68,20 +79,6 @@ var corsOptions = {
 };
 app.use(cors(corsOptions));
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  port: "3306",
-  database: "customers",
-  user: "admin",
-  password: "cW53a8x6",
-});
-
-connection.connect(function (error) {
-  if (error) throw error;
-
-  console.log("Connected to MySQL database!");
-});
-
 const isLoggedIn = (req, res, next) => {
   /* if (req.isAuthenticated()) {
     return next();
@@ -108,27 +105,23 @@ app.post("/api/register", (req, res) => {
   let user = req.body;
   hashPassword = passwordHash.generate(user.password);
 
-  sql =
-    'INSERT INTO users VALUES("' +
-    user.id +
-    '", "' +
-    user.firstName +
-    '", "' +
-    user.lastName +
-    '", "' +
-    user.userName +
-    '", "' +
-    hashPassword +
-    '", "' +
-    user.eMail +
-    '");';
+  pool.query(
+    "INSERT INTO users VALUES($1, $2, $3, $4, $5, $6)",
+    [
+      user.id,
+      user.firstname,
+      user.lastname,
+      user.username,
+      hashPassword,
+      user.email,
+    ],
+    function (error, result) {
+      if (error) throw error;
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      resultJSON = JSON.stringify(result);
+      res.send(resultJSON);
+    }
+  );
 });
 
 // CHECK CONNECTION
@@ -139,132 +132,106 @@ app.get("/api/connect", (req, res) => {
 // CUSTOMERS
 
 app.get("/api/customers", isLoggedIn, (req, res) => {
-  sql = "SELECT * FROM customer;";
-
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM customer", function (error, result) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
 app.route("/api/customers/:id").get((req, res) => {
   const id = req.params["id"];
-  sql = 'SELECT * FROM customer WHERE id = "' + id + '" LIMIT 1;';
-
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM customer WHERE id=$1 LIMIT 1", [id], function (
+    error,
+    result
+  ) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
 app.route("/api/customers").post((req, res) => {
   let customer = req.body;
-  let birthDateDate = new Date(customer.birthDate);
-  let birthDateString = birthDateDate
+  let birthdateDate = new Date(customer.birthdate);
+  let birthdateString = birthdateDate
     .toISOString()
     .slice(0, 10)
     .replace("T", " ");
   let timestamp = new Date();
   let timestampString = timestamp.toISOString().slice(0, 10).replace("T", " ");
 
-  sql =
-    'INSERT INTO customer VALUES("' +
-    customer.id +
-    '", "' +
-    customer.firstName +
-    '", "' +
-    customer.lastName +
-    '", "' +
-    customer.title +
-    '", "' +
-    customer.gender +
-    '", "' +
-    customer.job +
-    '", "' +
-    birthDateString +
-    '", "' +
-    customer.streetAddress +
-    '", "' +
-    customer.postalCode +
-    '", "' +
-    customer.city +
-    '", "' +
-    customer.country +
-    '", "' +
-    customer.currency +
-    '", "' +
-    customer.phone +
-    '", "' +
-    customer.eMail +
-    '", "' +
-    timestampString +
-    '");';
+  pool.query(
+    "INSERT INTO customer VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+    [
+      customer.id,
+      customer.firstname,
+      customer.lastname,
+      customer.title,
+      customer.gender,
+      customer.job,
+      birthdateString,
+      customer.streetaddress,
+      customer.postalcode,
+      customer.city,
+      customer.country,
+      customer.currency,
+      customer.phone,
+      customer.email,
+      timestampString,
+    ],
+    function (error, result) {
+      if (error) throw error;
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      res.status(200).send(result.rows);
+    }
+  );
 });
 
 app.route("/api/customers/:customer").put((req, res) => {
   let customer = req.body;
-  let birthDateDate = new Date(customer.birthDate);
-  let birthDateString = birthDateDate
+  let birthdateDate = new Date(customer.birthdate);
+  let birthdateString = birthdateDate
     .toISOString()
     .slice(0, 10)
     .replace("T", " ");
+  let timestamp = new Date();
+  let timestampString = timestamp.toISOString().slice(0, 10).replace("T", " ");
 
-  sql =
-    'UPDATE customer SET firstName="' +
-    customer.firstName +
-    '", lastName="' +
-    customer.lastName +
-    '", title="' +
-    customer.title +
-    '", gender="' +
-    customer.gender +
-    '", job="' +
-    customer.job +
-    '", birthDate="' +
-    birthDateString +
-    '", streetAddress="' +
-    customer.streetAddress +
-    '", postalCode="' +
-    customer.postalCode +
-    '", city="' +
-    customer.city +
-    '", country="' +
-    customer.country +
-    '", currency="' +
-    customer.currency +
-    '", phone="' +
-    customer.phone +
-    '", eMail="' +
-    customer.eMail +
-    '" WHERE id="' +
-    customer.id +
-    '";';
+  pool.query(
+    "UPDATE customer SET firstname=$1, lastname=$2, title=$3, gender=$4, job=$5, birthdate=$6, streetaddress=$7, postalcode=$8, city=$9, country=$10, currency=$11, phone=$12, email=$13, timestamp=$14 WHERE ID=$15",
+    [
+      customer.firstname,
+      customer.lastname,
+      customer.title,
+      customer.gender,
+      customer.job,
+      birthdateString,
+      customer.streetaddress,
+      customer.postalcode,
+      customer.city,
+      customer.country,
+      customer.currency,
+      customer.phone,
+      customer.email,
+      timestampString,
+      customer.id,
+    ],
+    function (error, result) {
+      if (error) throw error;
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      res.status(200).send(result.rows);
+    }
+  );
 });
 
 app.route("/api/customers/:id").delete((req, res) => {
   const id = req.params["id"];
 
-  sql = 'DELETE FROM customer WHERE id="' + id + '";';
-
-  connection.query(sql, function (error, result) {
+  pool.query("DELETE FROM customer WHERE id=$1", [id], function (
+    error,
+    result
+  ) {
     if (error) throw error;
 
     res.sendStatus(204);
@@ -274,38 +241,38 @@ app.route("/api/customers/:id").delete((req, res) => {
 // ORDERS
 
 app.route("/api/orders").get((req, res) => {
-  sql = "SELECT * FROM orders;";
-
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM orders", function (error, result) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
 app.route("/api/orders/:id").get((req, res) => {
   const id = req.params["id"];
-  sql = 'SELECT * FROM orders WHERE id = "' + id + '" LIMIT 1;';
 
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM orders WHERE id=$1 LIMIT 1", [id], function (
+    error,
+    result
+  ) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
-app.route("/api/ordersOfCustomer/:customerId").get((req, res) => {
-  const customerId = req.params["customerId"];
-  sql = 'SELECT * FROM orders WHERE customerId = "' + customerId + '";';
+app.route("/api/ordersOfCustomer/:customerid").get((req, res) => {
+  const customerid = req.params["customerid"];
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
+  pool.query(
+    'SELECT * FROM orders WHERE "customerid"=$1',
+    [customerid],
+    function (error, result) {
+      if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      res.status(200).send(result.rows);
+    }
+  );
 });
 
 app.route("/api/orders").post((req, res) => {
@@ -316,30 +283,23 @@ app.route("/api/orders").post((req, res) => {
     .slice(0, 10)
     .replace("T", " ");
 
-  sql =
-    'INSERT INTO orders VALUES("' +
-    order.id +
-    '", "' +
-    order.customerId +
-    '", "' +
-    order.productId +
-    '", "' +
-    currentDateString +
-    '", "' +
-    order.status +
-    '", "' +
-    order.amount +
-    '", "' +
-    currentDateString +
-    '");';
-  console.log(sql);
+  pool.query(
+    "INSERT INTO orders VALUES($1, $2, $3, $4, $5, $6, $7)",
+    [
+      order.id,
+      order.customerid,
+      order.productid,
+      currentDateString,
+      order.status,
+      order.amount,
+      currentDateString,
+    ],
+    function (error, result) {
+      if (error) throw error;
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      res.status(200).send(result.rows);
+    }
+  );
 });
 
 app.route("/api/orders/:order").put((req, res) => {
@@ -352,37 +312,29 @@ app.route("/api/orders/:order").put((req, res) => {
     .slice(0, 10)
     .replace("T", " ");
 
-  sql =
-    'UPDATE orders SET customerId="' +
-    order.customerId +
-    '", productId="' +
-    order.productId +
-    '", date="' +
-    orderDateString +
-    '", status="' +
-    order.status +
-    '", amount="' +
-    order.amount +
-    '", timestamp="' +
-    currentDateString +
-    '" WHERE id="' +
-    order.id +
-    '";';
+  pool.query(
+    "UPDATE orders SET customerid=$1, productid=$2, date=$3, status=$4, amount=$5, timestamp=$6 WHERE id=$7",
+    [
+      order.customerid,
+      order.productid,
+      orderDateString,
+      order.status,
+      order.amount,
+      currentDateString,
+      order.id,
+    ],
+    function (error, result) {
+      if (error) throw error;
 
-  connection.query(sql, function (error, result) {
-    if (error) throw error;
-
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
-  });
+      res.status(200).send(result.rows);
+    }
+  );
 });
 
 app.route("/api/orders/:id").delete((req, res) => {
   const id = req.params["id"];
 
-  sql = 'DELETE FROM orders WHERE id="' + id + '";';
-
-  connection.query(sql, function (error, result) {
+  pool.query("DELETE FROM orders WHERE id=$1", [id], function (error, result) {
     if (error) throw error;
 
     res.sendStatus(204);
@@ -392,25 +344,23 @@ app.route("/api/orders/:id").delete((req, res) => {
 // PRODUCTS
 
 app.route("/api/products").get((req, res) => {
-  sql = "SELECT * FROM product;";
-
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM product", function (error, result) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
 app.route("/api/products/:id").get((req, res) => {
   const id = req.params["id"];
-  sql = 'SELECT * FROM product WHERE id = "' + id + '" LIMIT 1;';
 
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM product WHERE id=$1 LIMIT 1", [id], function (
+    error,
+    result
+  ) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
@@ -418,29 +368,30 @@ app.route("/api/products/:id").get((req, res) => {
 
 app.route("/api/users/:id").get((req, res) => {
   const id = req.params["id"];
-  sql = 'SELECT * FROM users WHERE id = "' + id + '" LIMIT 1;';
 
-  connection.query(sql, function (error, result) {
+  pool.query("SELECT * FROM users WHERE id=$1 LIMIT 1", [id], function (
+    error,
+    result
+  ) {
     if (error) throw error;
 
-    resultJSON = JSON.stringify(result);
-    res.send(resultJSON);
+    res.status(200).send(result.rows);
   });
 });
 
 /* app.route('/api/generateOrders').get((req, res) => {
-    sqlCustomer = "SELECT * FROM customer;";
-    sqlProduct = "SELECT * FROM product;";
+    sqlCustomer = 'SELECT * FROM customer;';
+    sqlProduct = 'SELECT * FROM product;';
 
     orders = [];
 
-    connection.query(sqlCustomer, function(error,customerResult) {
+    pool.query(sqlCustomer, function(error,customerResult) {
         if (error) throw error;
 
         customersJSON = JSON.stringify(customerResult);        
         customers = JSON.parse(customersJSON);
 
-        connection.query(sqlProduct, function(error,productResult) {
+        pool.query(sqlProduct, function(error,productResult) {
             if (error) throw error;
     
             productsJSON = JSON.stringify(productResult);        
@@ -462,7 +413,7 @@ app.route("/api/users/:id").get((req, res) => {
 
                   const productIndex = Math.floor(Math.random() * Math.floor(1000));
                   const product = products[productIndex];
-                  const order = {id: id, customerId: customer.id, productId: product.id, date: currentDateString, status: status, amount: amount, timestamp: currentDateString};        
+                  const order = {id: id, customerid: customer.id, productid: product.id, date: currentDateString, status: status, amount: amount, timestamp: currentDateString};        
                   orders.push(order);
                 }
             }
@@ -470,10 +421,10 @@ app.route("/api/users/:id").get((req, res) => {
             for (var i = 0; i < orders.length; i++){
                 var order = orders[i];
 
-                sql = 'INSERT INTO orders VALUES("' + order.id + '", "' + order.customerId + '", "' + order.productId + '", "' + order.date + '", "' + order.status + '", "' + order.amount + '", "' + order.timestamp + '");'
+                sql = 'INSERT INTO orders VALUES('' + order.id + '', '' + order.customerid + '', '' + order.productid + '', '' + order.date + '', '' + order.status + '', '' + order.amount + '', '' + order.timestamp + '');'
                 console.log(sql);
 
-                connection.query(sql, function(error,result) {
+                pool.query(sql, function(error,result) {
                     if (error) throw error;           
                     
                 }); 

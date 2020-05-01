@@ -26,6 +26,8 @@
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "password-hash": "^1.2.2",
+    "pg": "^8.0.3",
+    "postgresql": "0.0.1",
     "uuidv4": "^6.0.7"
   }
 }
