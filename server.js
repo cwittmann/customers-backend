@@ -8,12 +8,20 @@ const LocalStrategy = require("passport-local").Strategy;
 const passwordHash = require("password-hash");
 const Pool = require("pg").Pool;
 
-const pool = new Pool({
+/* const pool = new Pool({
   user: "postgres",
   host: "localhost",
   database: "customers",
   password: "cW2600bx",
   port: 3000,
+}); */
+
+const pool = new Pool({
+  user: "iwnxcavlhdnosl",
+  host: "ec2-52-71-85-210.compute-1.amazonaws.com",
+  database: "d9h2fi140j4pe3",
+  password: "c319701958a8a75ae9d5ea7eae7e13db92367a25538dd9f1dfe2722968b65049",
+  port: 5432,
 });
 
 pool.on("error", function (error) {
