@@ -84,7 +84,7 @@ const auth = () => {
 };
 
 var corsOptions = {
-  origin: "https://customers-frontend.herokuapp.com/",
+  origin: "https://customers-frontend.herokuapp.com",
   /* origin: "http://localhost:4200", */
   optionsSuccessStatus: 204,
 };
