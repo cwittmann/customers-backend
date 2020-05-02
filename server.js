@@ -138,8 +138,8 @@ app.get("/api/connect", (req, res) => {
 });
 
 // DEFAULT
-app.get("*", (req, res) => {
-  res.status(200).send(result.rows);
+app.get("/", (req, res) => {
+  res.sendStatus(200);
 });
 
 // CUSTOMERS
