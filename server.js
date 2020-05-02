@@ -8,6 +8,8 @@ const LocalStrategy = require("passport-local").Strategy;
 const passwordHash = require("password-hash");
 const Pool = require("pg").Pool;
 
+var port = process.env.PORT || 8000;
+
 /* const pool = new Pool({
   user: "postgres",
   host: "localhost",
@@ -99,7 +101,7 @@ const isLoggedIn = (req, res, next) => {
     .json({ statusCode: 400, message: "not authenticated" });
 };
 
-app.listen(8000, () => {
+app.listen(port, () => {
   console.log("Server started!");
 });
 
