@@ -137,6 +137,11 @@ app.get("/api/connect", (req, res) => {
   res.status(200).json({ statusCode: 200 });
 });
 
+// DEFAULT
+app.get("*", (req, res) => {
+  res.status(200).send(result.rows);
+});
+
 // CUSTOMERS
 
 app.get("/api/customers", isLoggedIn, (req, res) => {
